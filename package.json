@@ -1,0 +1,29 @@
+{
+  "name": "amazonscraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch --env-file .env src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/claudiojas/amazonScraper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/claudiojas/amazonScraper/issues"
+  },
+  "homepage": "https://github.com/claudiojas/amazonScraper#readme",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsdom": "^26.0.0",
+    "tsx": "^4.19.3"
+  }
+}
