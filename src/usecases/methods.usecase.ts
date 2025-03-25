@@ -1,6 +1,7 @@
-import { IOpeningWebhook, IUserLogin } from "../interfaces/interfaces";
+import { IGetScraper, IProductScraper } from "../interfaces/method.interface";
 import { methodsRepositorie } from "../repositorie/methods.repositorie";
-import { z } from "zod";
+import { JSDOM } from 'jsdom';
+
 
 export class MethodsUseCase {
     private repositorie: methodsRepositorie;
@@ -9,59 +10,53 @@ export class MethodsUseCase {
     };
 
 
-    async create(data: IOpeningWebhook) {
+    async getScraper (keyword: IGetScraper) {
 
-        const OpeningWebhookSchema = z.object({
-            email: z.string(),
-            postId: z.string().optional(),
-            utmSource: z.string().optional(),
-            utmMedium: z.string().optional(),
-            utmCampaign: z.string().optional(),
-            utmChannel: z.string().optional(),
+        if (!keyword) {
+            return { error: 'Keyword is required' }
+        };
+
+
+        const resultRepositorie = await this.repositorie.GET(keyword);
+
+
+        if (!resultRepositorie || typeof resultRepositorie !== 'string') {
+            return { error: 'Invalid HTML content received' };
+        };
+        
+        const data = resultRepositorie;
+
+        if (!data || typeof data !== 'string' || data.trim() === '') {
+            throw new Error('O conteúdo de resultRepositorie não é válido ou está vazio.');
+        }
+
+        const dom = new JSDOM(data);
+        const document = dom.window.document;
+        const items: IProductScraper[] = [];
+        resultRepositorie
+
+
+        document.querySelectorAll('.s-main-slot .s-result-item').forEach(item => {
+            const titleElement = item.querySelector('a h2 span');
+            let title = titleElement ? titleElement.textContent.trim() : 'No title';
+            
+            const match = title.match(/^(.+?)\s*(?:\d+\.\d+ out of 5 stars)?$/);
+            if (match) {
+                title = match[1].trim();
+            }
+            const product: IProductScraper = {
+                title: title,
+                rating: item.querySelector('.a-icon-star-small')?.textContent?.trim() || 'No rating',
+                reviews: item.querySelector('.a-size-small .a-link-normal')?.textContent?.trim() || '0',
+                image: item.querySelector('.s-image')?.src || ''
+            };
+            
+            items.push(product);
         });
 
-
-        const _data = OpeningWebhookSchema.parse(data);
-        if ( !_data.email ) {
-            throw new Error("Email is necessary.");
-        }
-
-        const verifyEmailExists = await this.repositorie.verifyUser(_data.email);
-        if (verifyEmailExists) {
-            return { message: "Email already exists." };
-        }
-
-        const newData = {
-            email: _data.email,
-            postId: _data.postId,
-            utmSource: _data.utmSource,
-            utmMedium: _data.utmMedium,
-            utmCampaign: _data.utmCampaign,
-            utmChannel: _data.utmChannel,
-        }
-
-        const result = await this.repositorie.create(newData);
-
-        return result;
+        
+        return items;
+        
     };
 
-    async login({ email }: IUserLogin) {
-        const isEmailPresentSchema = z.object({
-            email: z.string(),
-        });
-
-        const _email = isEmailPresentSchema.parse({ email });
-        if (!_email.email) {
-            throw new Error("Email is necessary.");
-        };
-
-        const verifyEmail = await this.repositorie.verifyUser(email);
-        if(!verifyEmail) {
-            throw new Error("Email not found.");
-        };
-
-        const result = await this.repositorie.login({ email });
-
-        return result;
-    }
 }

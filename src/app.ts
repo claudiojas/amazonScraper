@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import cors from "cors"
+import { getScraper } from "./routes/scraper.router";
 
 
 export class App {
@@ -21,5 +22,6 @@ export class App {
         this.app.use(cors());
         this.app.use(express.json({ limit: '10mb' }));
         this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(getScraper);
     }
 }
